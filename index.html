@@ -1,444 +1,2974 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta content="Snake" property="og:title" />
-  <meta content="A simple snake game" property="og:description" />
-  <meta content="https://m4rkontop.github.io/snake" property="og:url" />
-  <meta content="https://i.imgur.com/ND5Z2XC.png" property="og:image" />
-  <meta content="#00ff00" data-react-helmet="true" name="theme-color" />
-  <link rel="icon" href="images/logo.png">
-  <title>Snake</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      background: #111;
-      color: white;
-      font-family: sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-
-    .navbar .logo {
-      width: 50px;
-      height: 50px;
-      background-image: url('images/logo.png');
-      background-size: cover;
-      border-style: solid;
-      border-width: 2px;
-      border-color: #555;
-    }
-
-    .navbar .logo:hover {
-      background-image: url('images/logo.gif');
-      cursor: pointer;
-    }
-
-    .navbar {
-      background-color: #333;
-      border-style: solid;
-      border-width: 0px 0px 2px;
-      border-color: #555;
-      display: flex;
-      align-items: center;
-      justify-content: start;
-      gap: 10px;
-      padding: 10px;
-      position: relative;
-    }
-
-    .navbar h1 {
-      margin: 0;
-    }
-
-    .navbar span {
-      font-size: 1rem;
-      font-weight: bold;
-      color: red;
-    }
-
-    canvas {
-      background: #222;
-      margin: 10px auto;
-      border: 2px solid #555;
-      touch-action: none;
-    }
-
-    .scoreboard {
-      margin-top: 40px;
-      margin-bottom: 5px;
-      font-size: 1.2rem;
-    }
-
-    #message {
-      font-size: 2rem;
-      margin-top: 10px;
-      color: white;
-    }
-
-    .dropdown {
-      position: relative;
-    }
-
-    .dropdown .main-button {
-      height: 40px;
-      width: 100px;
-      background-color: #555;
-      color: white;
-      border: 2px solid #555;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .dropdown-content button {
-      font-weight: bold;
-      background-color: #333;
-      color: white;
-      border-style: solid;
-      border-width: 2px 2px 0px 2px;
-      border-color: #555;
-      width: 100px;
-      height: 40px;
-    }
-
-    .dropdown-content .last-one {
-      border-bottom: 2px solid #555;
-    }
-
-    .dropdown-content {
-      position: absolute;
-      top: 50px;
-      left: 0;
-      background-color: #333;
-      display: none;
-      flex-direction: column;
-      z-index: 1;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      position: absolute;
-      right: 10px;
-    }
-    
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bricky Studios</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="imgs/logo.png">
 </head>
-<body>
-  <div class="navbar">
-    <div class="logo"></div>
-    <h1>Snake</h1><span>beta</span>
 
-    <div class="buttons">
-      <div class="dropdown">
-      <button class="main-button">🎮 Difficulty</button>
-      <div class="dropdown-content">
-        <button onclick="setDifficulty('easy')">Easy</button>
-        <button onclick="setDifficulty('normal')">Normal</button>
-        <button class="last-one" onclick="setDifficulty('hard')">Hard</button>
-      </div>
-    </div>
-
-    <div class="dropdown">
-      <button class="main-button">🎨 Theme</button>
-      <div class="dropdown-content">
-        <button onclick="setTheme('christmas')">Modern</button>
-        <button onclick="setTheme('neon')">Neon</button>
-        <button class="last-one" onclick="setTheme('classic')">Classic</button>
-      </div>
-    </div>
-  </div>
-    </div>
-
-  <div class="scoreboard">
-    score: <span id="score">0</span> | best score: <span id="highscore">0</span>
-  </div>
-  <canvas id="game" width="400" height="400"></canvas>
-
-  <div style="margin-top: 10px;">
-  <button id="pauseBtn" style="padding: 10px 20px; font-size: 1rem; background-color: #555; color: white; border: 2px solid #555; cursor: pointer;">
-    Pause
-  </button>
-  </div>
-
-  <div id="message">Press a Button to start!</div>
-
-<script>
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const box = 20;
-  const rows = canvas.height / box;
-  const cols = canvas.width / box;
-  const scoreEl = document.getElementById("score");
-  const highscoreEl = document.getElementById("highscore");
-  const messageEl = document.getElementById("message");
-
-  let snake = [{ x: 9 * box, y: 9 * box }];
-  let direction = { x: 0, y: 0 };
-  let nextDirection = { x: 1, y: 0 };
-  let food = spawnFood();
-  let score = 0;
-  let highscore = parseInt(getCookie("highscore") || "0");
-  let playing = false;
-  let gameInterval = null;
-  let countdownInterval = null;
-  let isCountingDown = false;
-
-  // Theme/colors
-  let snakeColor = "lime";
-  let foodColor = "red";
-
-  // Difficulty
-  let speed = 100;
-
-  let gameStarted = false;
-
-  // Load from cookies
-  const savedTheme = getCookie("theme") || "classic";
-  const savedDifficulty = getCookie("difficulty") || "normal";
-  setTheme(savedTheme);
-  setDifficulty(savedDifficulty);
-
-  highscoreEl.innerText = highscore;
-
-function startGame() {
-  if (playing || direction.x !== 0 || direction.y !== 0 || isCountingDown) return;
-  gameStarted = true; // <- itt jelezzük, hogy már elindult
-  pauseBtn.disabled = false; // <- engedélyezzük a gombot
-  startCountdown(() => {
-    direction = nextDirection;
-    playing = true;
-    gameLoop();
-  });
+<style>
+:root {
+  --background-color: #0e0e0e;
+  --button-bg: rgba(0, 0, 0, 0.28);
+  --button-bg-light: rgba(0, 0, 0, 0.075);
+  --blue: #2F89FC;
+  --dot: #4CAF50;
+  --text: #E7F2FF;
+  --nav-bg: rgba(14, 14, 14, 0.85);
+  --nav-border: rgba(231, 242, 255, 0.15);
 }
 
-function stopGame() {
-  playing = false;
-  clearTimeout(gameInterval);
-  direction = { x: 0, y: 0 }; // <- FONTOS: ezt adjuk hozzá
-  messageEl.innerText = "Game paused. press any key, space or the button to continue.";
+html[data-theme="light"] {
+  --background-color: #E7F2FF;
+  --text: #0e0e0e;
+  --nav-bg: rgba(231, 242, 255, 0.85);
+  --nav-border: rgba(14, 14, 14, 0.15);
+  --button-bg: var(--button-bg-light);
 }
 
-  function startCountdown(callback) {
-    let count = 3;
-    isCountingDown = true;
-    messageEl.innerText = count;
-    countdownInterval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        messageEl.innerText = count;
-      } else {
-        clearInterval(countdownInterval);
-        messageEl.innerText = "";
-        isCountingDown = false;
-        callback();
-      }
-    }, 500);
+html[data-theme="light"] .review-card,
+html[data-theme="light"] .team-card,
+html[data-theme="light"] .video-shell,
+html[data-theme="light"] .video-pill,
+html[data-theme="light"] .team-head {
+  background: var(--button-bg) !important;
+}
+
+html[data-theme="light"] .gallery-image {
+  background: transparent !important;
+}
+
+@font-face {
+  font-family: "mctitle";
+  src: url(fonts/MinecraftTen.otf);
+}
+
+@font-face {
+  font-family: "mctext";
+  src: url(fonts/1_Minecraft-Regular.otf);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
+
+#home,
+#reviews,
+#works,
+#videos,
+#team {
+  scroll-margin-top: 92px;
+}
+
+@media (max-width: 480px) {
+  #home,
+  #reviews,
+  #works,
+  #videos,
+  #team {
+    scroll-margin-top: 76px;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 200vh;
+  background-color: var(--background-color);
+  overflow-x: hidden;
+}
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    background: var(--nav-bg);
+    -webkit-backdrop-filter: blur(100px);
+    backdrop-filter: blur(100px);
+    border-bottom: 1px solid var(--nav-border);
+    z-index: 1000;
   }
 
-  function gameLoop() {
-    if (!playing) return;
+  .nav-group {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
 
-    gameInterval = setTimeout(() => {
-      direction = nextDirection;
+  .nav-left {
+    justify-content: flex-end;
+    min-width: 280px;
+  }
 
-      const head = {
-        x: snake[0].x + direction.x * box,
-        y: snake[0].y + direction.y * box
-      };
+  .nav-right {
+    justify-content: flex-start;
+    min-width: 280px;
+  }
 
-      if (
-        head.x < 0 || head.x >= canvas.width ||
-        head.y < 0 || head.y >= canvas.height ||
-        snake.some(segment => segment.x === head.x && segment.y === head.y)
-      ) {
-        if (score > highscore) setCookie("highscore", score, 365);
-        alert("Game over! Pontszám: " + score);
-        location.reload();
+  .nav-center {
+    margin: 0 40px;
+  }
+
+.nav-link {
+  color: var(--text);
+  font-family: "mctitle";
+  font-size: 22px;
+  text-decoration: none;
+  opacity: 0.9;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+.nav-link.active {
+  color: var(--blue);
+  opacity: 1;
+}
+.nav-center.active {
+  color: var(--blue);
+}
+
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.nav-center:visited {
+  color: inherit;
+}
+
+  .nav-logo {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
+.nav-brand {
+  display: none;
+  font-family: "mctitle";
+  font-size: 24px;
+  line-height: 1;
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .nav-brand {
+    display: inline-block;
+  }
+}
+
+.nav-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--nav-border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-toggle svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+
+.nav-toggle .icon-close { display: none; }
+
+.mobile-menu {
+  display: none;
+}
+
+.navbar.menu-open .nav-toggle .icon-burger { display: none; }
+.navbar.menu-open .nav-toggle .icon-close { display: block; }
+
+@media (min-width: 481px) {
+  
+  .navbar .theme-toggle--desktop {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1101;
+  }
+}
+
+.theme-toggle {
+  transition: color 180ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--blue);
+}
+
+.theme-toggle svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+
+.theme-toggle--mobile { display: none; }
+
+@media (max-width: 480px) {
+  
+  .theme-toggle--desktop { display: none !important; }
+
+  .theme-toggle--mobile {
+    display: inline-flex;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+
+    width: 48px;
+    height: 48px;
+
+    border: none;
+    background: var(--blue);
+    color: #E7F2FF;
+
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    z-index: 2000;
+  }
+
+  
+  .theme-toggle--mobile {
+    transition: color 180ms ease;
+  }
+
+  .theme-toggle--mobile:hover { color: #E7F2FF; }
+}
+
+
+  .scroll-down {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%) translateY(8px);
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--nav-border);
+    background: var(--button-bg); 
+    color: var(--text);
+
+    
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    z-index: 1100;
+
+    
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+      opacity 180ms ease,
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .scroll-down.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .scroll-down:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+.scroll-down svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+@keyframes scrollJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.scroll-down .jump {
+  animation: scrollJump 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@media (max-width: 480px) {
+  
+  .scroll-down {
+    display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  
+  .scroll-down {
+    bottom: 74px;
+  }
+}
+
+
+.theme-toggle .icon-moon { display: none; }
+html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
+html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 64px;
+    padding: 0 10px;
+    justify-content: space-between;
+  }
+
+  .nav-left,
+  .nav-right {
+    min-width: 0;
+  }
+
+  .nav-group {
+    gap: 16px;
+  }
+
+  .nav-center {
+    margin: 0 18px;
+  }
+
+  .nav-link {
+    font-size: 20px;
+  }
+
+  .Title {
+    padding-top: 64px;
+  }
+
+  
+  .nav-center {
+    margin: 0;
+  }
+
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  
+  .nav-left,
+  .nav-right {
+    display: none;
+  }
+
+  
+  .mobile-menu {
+    display: none;
+  }
+
+  .navbar.menu-open .mobile-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 64px; 
+
+    padding: 16px 12px 18px;
+
+    
+    background-color: var(--nav-bg);
+
+    border-bottom: 1px solid var(--nav-border);
+    z-index: 1001; 
+  }
+
+  .navbar.menu-open .mobile-menu > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .navbar.menu-open .mobile-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+
+    
+    background-color: var(--nav-bg);
+    -webkit-backdrop-filter: blur(100px);
+    backdrop-filter: blur(100px);
+  }
+
+  html[data-theme="light"] .navbar.menu-open .mobile-menu::before {
+    background: var(--nav-bg) !important;
+  }
+
+  
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .navbar.menu-open .mobile-menu::before {
+      background: rgba(14, 14, 14, 0.92);
+    }
+
+    html[data-theme="light"] .navbar.menu-open .mobile-menu::before {
+      background: rgba(231, 242, 255, 0.92);
+    }
+  }
+
+  
+  .nav-center.active {
+    color: var(--text);
+  }
+}
+
+.reviews-carousel {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.reviews-row {
+  display: grid;
+  grid-template-columns: 48px auto 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 100%;
+}
+
+.review-card {
+  width: clamp(320px, 76vw, 720px);
+  height: 220px; 
+  background: var(--button-bg);
+  border: 1px solid var(--nav-border);
+  padding: 18px;
+  text-align: left;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.review-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap; 
+}
+
+.review-name {
+  font-family: "mctitle";
+  font-size: 20px;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-stars {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue);
+  flex: 0 1 auto;
+}
+
+.review-stars svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.review-text {
+  margin-top: 12px;
+  font-family: "mctext";
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  flex: 1;
+  overflow: auto;
+}
+
+.reviews-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.reviews-dot {
+  width: 16px;
+  height: 16px;
+  background-color: var(--text); 
+  opacity: 1;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background-color 240ms ease;
+}
+
+.reviews-dot.active {
+  background-color: var(--blue);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .reviews-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "card card"
+      "prev next";
+    gap: 12px;
+    align-items: center;
+    justify-items: center;
+  }
+
+  #reviewCard {
+    grid-area: card;
+  }
+
+  #reviewsPrev {
+    grid-area: prev;
+    justify-self: end;
+  }
+
+  #reviewsNext {
+    grid-area: next;
+    justify-self: start;
+  }
+
+  .review-card {
+    width: min(520px, 92vw);
+    height: 240px;
+  }
+
+  
+  .reviews-dots {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .reviews-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "card card"
+      "prev next";
+    gap: 12px;
+    align-items: center;
+    justify-items: center;
+  }
+
+  .review-card {
+    width: min(320px, 92vw);
+    height: 260px;
+  }
+
+  
+}
+
+
+.Title {
+  padding-top: 72px;
+}
+
+.Title {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.content {
+  color: var(--text);
+  max-width: 1000px;
+  width: 100%;
+}
+
+.content h1 {
+  font-size: 94px;
+  font-family: "mctitle";
+}
+
+.content p {
+  font-family: "mctext";
+  margin-top: -64px;
+  font-size: 18px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  text-justify: inter-word;
+}
+
+.highlight {
+  color: var(--blue);
+  position: relative;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background-color: var(--blue);
+}
+
+
+.content .discord-btn {
+  height: 48px;
+  width: 168px;
+  color: var(--blue);
+  background: var(--button-bg);
+  border: 1px solid var(--blue);
+  font-size: 24px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: "mctext";
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  line-height: 1;
+  overflow: hidden;
+}
+
+
+.content .discord-btn .discord-state {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+
+  
+  transition:
+    opacity 120ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.content .discord-btn .discord-icon {
+  width: 16px !important;
+  height: 16px !important;
+  display: block;
+}
+
+
+.content .discord-btn .discord-state-default {
+  opacity: 1;
+}
+
+.content .discord-btn .discord-state-hover {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateX(3px);
+}
+
+
+.content .discord-btn:hover .discord-state-default {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateX(-3px);
+}
+
+.content .discord-btn:hover .discord-state-hover {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateX(0);
+  transition-delay: 20ms;
+}
+
+.content .discord-btn .discord-state-hover {
+  transition-delay: 0ms;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .content .discord-btn .discord-state,
+  .content .discord-btn .discord-icon,
+  .content .discord-btn .discord-label {
+    transition: none;
+  }
+}
+
+.button-count {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.online-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "mctext";
+}
+
+.online-count span {
+  display: block;
+  font-size: 22px;
+  line-height: 1.6; 
+}
+
+.number {
+  color: var(--blue);
+}
+
+.green-dot {
+  width: 16px;
+  height: 16px;
+  background-color: var(--dot);
+  display: block;
+  flex-shrink: 0;
+  align-self: center; 
+  position: relative;
+}
+
+
+.green-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(76, 175, 80, 0.45);
+  opacity: 0;
+  transform: scale(0.85);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  20% {
+    opacity: 0.9;
+    transform: scale(1.0);
+  }
+  55% {
+    opacity: 0.2;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+
+.works-gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.gallery-row {
+  
+  display: grid;
+  grid-template-columns: 48px clamp(320px, 76vw, 720px) 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 100%;
+}
+
+.gallery-btn {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.gallery-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.gallery-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+
+.gallery-image {
+  width: clamp(320px, 76vw, 720px);
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  background: transparent;
+    border: 1px solid var(--nav-border);
+}
+
+  .gallery-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  
+  .gallery-dot {
+    width: 16px;
+    height: 16px;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+
+    position: relative;
+    background: var(--text); 
+    overflow: hidden;
+  }
+
+  .gallery-dot .dot-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--blue);
+    opacity: 0;
+    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .gallery-dot.active .dot-fill {
+    opacity: 1;
+  }
+
+@media (max-width: 768px) {
+  .gallery-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "img img"
+      "prev next";
+    gap: 12px;
+    align-items: center;
+    justify-items: center;
+  }
+
+  #galleryImage {
+    grid-area: img;
+  }
+
+  #galleryPrev {
+    grid-area: prev;
+    justify-self: end;
+  }
+
+  #galleryNext {
+    grid-area: next;
+    justify-self: start;
+  }
+
+  .gallery-image {
+    width: min(520px, 92vw);
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    border: 1px solid var(--nav-border);
+  }
+
+  .gallery-dots {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "img img"
+      "prev next";
+    gap: 12px;
+    align-items: center;
+    justify-items: center;
+  }
+
+  #galleryImage {
+    grid-area: img;
+  }
+
+  #galleryPrev {
+    grid-area: prev;
+    justify-self: end;
+  }
+
+  #galleryNext {
+    grid-area: next;
+    justify-self: start;
+  }
+
+  .gallery-image {
+    width: min(320px, 92vw);
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    border: 1px solid var(--nav-border);
+  }
+
+  .gallery-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .gallery-dots {
+    display: none;
+  }
+}
+
+
+.works-videos {
+  margin-top: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.video-shell {
+  width: clamp(320px, 76vw, 720px);
+  background: var(--button-bg);
+  border: 1px solid var(--nav-border);
+}
+
+.video-frame {
+  position: relative;
+  
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--button-bg);
+  overflow: hidden;
+}
+
+.video-frame video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  
+  object-fit: cover;
+  background: var(--button-bg);
+}
+
+.video-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--nav-border);
+}
+
+.vbtn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--nav-border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.vbtn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+
+.vbtn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+
+.vbtn .icon { display: none; }
+.vbtn .icon.is-visible { display: block; }
+
+.time-readout {
+  font-family: "mctext";
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.seek {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.seek input[type="range"],
+.volume input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(231, 242, 255, 0.18);
+  outline: none;
+  cursor: pointer;
+}
+
+.seek input[type="range"]::-webkit-slider-thumb,
+.volume input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+}
+
+html[data-theme="light"] .seek input[type="range"],
+html[data-theme="light"] .volume input[type="range"] {
+  background: rgba(14, 14, 14, 0.22);
+}
+
+.volume {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-list {
+  width: clamp(320px, 76vw, 720px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.video-pill {
+  font-family: "mctext";
+  font-size: 14px;
+  color: var(--text);
+  border: 1px solid var(--nav-border);
+  background: var(--button-bg);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.video-pill.active {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+@media (max-width: 768px) {
+  .video-shell,
+  .video-list {
+    width: min(520px, 92vw);
+  }
+
+  
+  .video-controls .volume {
+    display: none;
+  }
+  .video-frame {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-shell,
+  .video-list {
+    width: min(320px, 92vw);
+  }
+
+  .video-controls {
+    gap: 8px;
+  }
+
+  .time-readout {
+    font-size: 12px;
+  }
+  .video-frame {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .content h1 {
+    font-size: 64px;
+  }
+
+  .content p {
+    margin-top: -40px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .content h1 {
+    font-size: 48px;
+  }
+
+  .content p {
+    font-size: 16px;
+    margin-top: -28px;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .content p br {
+    display: none;
+  }
+
+  .button-count {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .content .discord-btn {
+    width: 168px;      
+    max-width: 168px;  
+    font-size: 20px;
+  }
+}
+
+.team-grid {
+  display: grid;
+  gap: 18px;
+
+  
+  grid-template-columns: repeat(3, 340px);
+  justify-content: center;
+
+  
+  max-width: calc(340px * 3 + 18px * 2);
+  margin: 28px auto 0;
+  padding: 0 8px;
+}
+
+.team-card {
+  border: 1px solid var(--nav-border);
+  background: var(--button-bg);
+  padding: 18px;
+  text-align: left;
+
+  width: 340px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.team-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.team-head {
+  width: 56px;
+  height: 56px;
+  image-rendering: pixelated;
+  border: 1px solid var(--nav-border);
+  background: var(--button-bg);
+  flex-shrink: 0;
+}
+
+.team-name {
+  font-family: "mctitle";
+  font-size: 24px;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.role-badge {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(231, 242, 255, 0.18);
+  background: rgba(231, 242, 255, 0.08);
+  color: var(--text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.role-badge svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+
+
+.role-badge.rb-owner   { background: #3498db; border-color: rgba(255, 255, 255, 0.35); }
+.role-badge.rb-team { background: #2ecc71; border-color: rgba(255, 255, 255, 0.35); }
+.role-badge.rb-dev { background: #f1c40f; border-color: rgba(255, 255, 255, 0.35); }
+
+.team-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.team-tag {
+  font-family: "mctext";
+  font-size: 16px;
+  padding: 6px 10px;
+  border: 1px solid rgba(231, 242, 255, 0.18);
+  background: rgba(231, 242, 255, 0.08);
+  color: var(--text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+
+.team-tag.blue { background: rgba(47, 137, 252, 0.18); border-color: rgba(47, 137, 252, 0.35); }
+.team-tag.green { background: rgba(76, 175, 80, 0.18); border-color: rgba(76, 175, 80, 0.35); }
+.team-tag.purple { background: rgba(156, 39, 176, 0.18); border-color: rgba(156, 39, 176, 0.35); }
+.team-tag.orange { background: rgba(255, 152, 0, 0.18); border-color: rgba(255, 152, 0, 0.35); }
+.team-tag.red { background: rgba(244, 67, 54, 0.18); border-color: rgba(244, 67, 54, 0.35); }
+
+.team-desc {
+  margin-top: 12px;
+  font-family: "mctext";
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  flex: 1;
+}
+
+.team-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.team-social a {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--nav-border);
+  color: var(--text);
+  text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.team-social a:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.team-social svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+
+ .social-swap {
+   position: relative;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   line-height: 0;
+ }
+
+ .social-swap svg {
+   display: block;
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1), transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+   will-change: opacity, transform;
+ }
+
+ .social-swap .icon-default {
+   opacity: 1;
+   transform: translate(-50%, -50%) translateX(0);
+ }
+
+ .social-swap .icon-hover {
+   opacity: 0;
+   transform: translate(-50%, -50%) translateX(-2px);
+ }
+
+ .social-swap:hover .icon-default {
+   opacity: 0;
+   transform: translate(-50%, -50%) translateX(2px);
+ }
+
+ .social-swap:hover .icon-hover {
+   opacity: 1;
+   transform: translate(-50%, -50%) translateX(0);
+ }
+
+@media (prefers-reduced-motion: reduce) {
+  .social-swap svg {
+    transition: none;
+  }
+}
+
+
+@media (max-width: 1100px) {
+  .team-grid {
+    grid-template-columns: repeat(2, 340px);
+    max-width: calc(340px * 2 + 18px);
+  }
+}
+
+
+@media (max-width: 720px) {
+  .team-grid {
+    
+    grid-template-columns: min(340px, 92vw);
+    justify-content: center;
+    max-width: 100%;
+  }
+
+  .team-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-grid {
+    gap: 14px;
+  }
+
+  .team-name {
+    font-size: 20px;
+  }
+
+  .role-badge {
+    width: 24px;
+    height: 24px;
+  }
+
+  .role-badge svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  #works {
+    min-height: auto !important;      
+    padding-top: 72px !important;
+    padding-bottom: 28px !important;
+  }
+
+  #videos {
+    padding-top: 56px !important;
+    padding-bottom: 40px !important;
+  }
+
+  
+  #videos .works-videos {
+    margin-top: 22px !important;
+  }
+}
+
+.site-footer {
+  border: none;
+  border-top: 1px solid var(--nav-border);
+  padding: 32px 16px;
+  margin-top: 96px;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+  .footer-copy {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: "mctext";
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.85;
+    text-align: center;
+  }
+
+  .footer-copy-text.footer-copy-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: normal;
+    text-align: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-copy-stack {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .footer-copy-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .footer-copy-bottom {
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+
+  .footer-copy-full {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .footer-copy-text svg {
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+
+  .footer-copy-text #year {
+    display: inline;
+  }
+
+  .footer-rules {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    font-family: "mctext";
+    font-size: 14px;
+
+    color: var(--blue);
+    text-decoration: none;
+    opacity: 1;
+
+    transition: color 200ms ease, opacity 200ms ease, text-decoration-color 200ms ease;
+  }
+
+  .footer-rules:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+  }
+
+  .footer-rules .rules-icon {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+
+  .footer-rules .rules-icon svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    transform: translate(-50%, -50%);
+    display: block;
+
+    transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity;
+  }
+
+  .footer-rules .rules-icon .icon-default { opacity: 1; }
+  .footer-rules .rules-icon .icon-hover { opacity: 0; }
+
+  .footer-rules:hover .rules-icon .icon-default { opacity: 0; }
+  .footer-rules:hover .rules-icon .icon-hover { opacity: 1; }
+
+  .footer-rules .rules-label {
+    line-height: 1;
+  }
+
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-social a {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--nav-border);
+  background: var(--button-bg);
+  color: var(--text);
+  text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.footer-social a:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.footer-social svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-copy {
+    order: 1;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .footer-rules {
+    order: 2;
+  }
+
+  .footer-social {
+    order: 3;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-copy-stack {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .footer-copy-top {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .footer-copy-bottom {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+
+.theme-toggle,
+.theme-toggle--mobile,
+.nav-link,
+.gallery-btn,
+.vbtn,
+.team-social a,
+.footer-social a {
+  transition-duration: 320ms !important;
+}
+
+
+.nav-link {
+  transition: color 320ms ease, opacity 320ms ease !important;
+}
+
+.gallery-btn,
+.vbtn,
+.team-social a,
+.footer-social a {
+  transition: color 320ms ease, border-color 320ms ease !important;
+}
+
+.theme-toggle,
+.theme-toggle--mobile {
+  transition: color 320ms ease !important;
+}
+
+
+html, body {
+  transition: background-color 320ms ease, color 320ms ease;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text);
+}
+
+
+.navbar,
+.site-footer,
+.review-card,
+.team-card,
+.video-shell,
+.video-pill,
+.team-head,
+.gallery-image {
+  transition: background-color 320ms ease, border-color 320ms ease, color 320ms ease;
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .navbar {
+    padding: 0 14px;
+  }
+
+  .nav-group {
+    gap: 18px;
+  }
+
+  
+  .nav-left,
+  .nav-right {
+    min-width: 0 !important;
+    flex: 1 1 0;
+  }
+
+  .nav-left {
+    justify-content: flex-end;
+  }
+
+  .nav-right {
+    justify-content: flex-start;
+  }
+
+  
+  .nav-center {
+    margin: 0 18px !important;
+    flex: 0 0 auto;
+    flex-shrink: 0;
+  }
+
+  .nav-link {
+    font-size: 20px;
+    white-space: nowrap;
+  }
+
+  
+  .navbar .theme-toggle--desktop {
+    right: 14px;
+  }
+}
+
+
+
+</style>
+
+<body oncontextmenu="return false;">
+  <div id="top"></div>
+  <nav class="navbar">
+    <div class="nav-group nav-left" id="mobileMenu">
+            <a class="nav-link" href="#reviews">Reviews</a>
+      <a class="nav-link" href="#works">Works</a>
+    </div>
+
+    <a class="nav-center" href="#top" aria-label="Back to top">
+      <svg class="nav-logo" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Bricky logo" xmlns="http://www.w3.org/2000/svg">
+        <rect x="26.1818" y="8.72727" width="5.81818" height="5.81818" fill="currentColor"/>
+        <rect x="20.3637" width="11.6364" height="5.81818" fill="currentColor"/>
+        <rect width="17.4545" height="5.81818" fill="currentColor"/>
+        <rect y="8.72727" width="2.90909" height="5.81818" fill="currentColor"/>
+        <rect x="5.81816" y="8.72727" width="17.4545" height="5.81818" fill="currentColor"/>
+        <rect x="26.1818" y="26.1818" width="5.81818" height="5.81818" fill="currentColor"/>
+        <rect x="20.3637" y="17.4545" width="11.6364" height="5.81818" fill="currentColor"/>
+        <rect y="17.4545" width="17.4545" height="5.81818" fill="currentColor"/>
+        <rect y="26.1818" width="2.90909" height="5.81818" fill="currentColor"/>
+        <rect x="5.81816" y="26.1818" width="17.4545" height="5.81818" fill="currentColor"/>
+      </svg>
+      <span class="nav-brand" aria-hidden="true">Bricky</span>
+    </a>
+
+    <div class="nav-group nav-right" id="mobileMenuRight">
+      <a class="nav-link" href="#videos">Videos</a>
+      <a class="nav-link" href="#team">Team</a>
+    </div>
+
+    <button class="theme-toggle theme-toggle--desktop" type="button" aria-label="Toggle dark/light mode">
+      <svg class="icon-sun" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sun">
+        <path d="M17.3333 0H14.6667V5.33333H17.3333V0ZM0 14.6667V17.3333H5.33333V14.6667H0ZM32 14.6667V17.3333H26.6667V14.6667H32ZM17.3333 32H14.6667V26.6667H17.3333V32ZM10.6667 8H21.3333V10.6667H10.6667V8ZM8 10.6667H10.6667V21.3333H8V10.6667ZM10.6667 24V21.3333H21.3333V24H10.6667ZM24 21.3333H21.3333V10.6667H24V21.3333ZM26.6667 2.66667H29.3333V5.33333H26.6667V2.66667ZM26.6667 5.33333V8H24V5.33333H26.6667ZM29.3333 29.3333H26.6667V26.6667H29.3333V29.3333ZM26.6667 26.6667H24V24H26.6667V26.6667ZM5.33333 2.66667H2.66667V5.33333H5.33333V8H8V5.33333H5.33333V2.66667ZM2.66667 29.3333H5.33333V26.6667H8V24H5.33333V26.6667H2.66667V29.3333Z" fill="currentColor"/>
+      </svg>
+
+      <svg class="icon-moon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Moon">
+        <path d="M6.4 0H19.2V3.2H16V6.4H12.8V3.2H6.4V0ZM3.2 6.4V3.2H6.4V6.4H3.2ZM3.2 22.4H0V6.4H3.2V22.4ZM6.4 25.6H3.2V22.4H6.4V25.6ZM9.6 28.8H6.4V25.6H9.6V28.8ZM25.6 28.8V32H9.6V28.8H25.6ZM28.8 25.6V28.8H25.6V25.6H28.8ZM25.6 19.2H28.8V25.6H32V12.8H28.8V16H25.6V19.2ZM16 19.2V22.4H25.6V19.2H16ZM12.8 16H16V19.2H12.8V16ZM12.8 16V6.4H9.6V16H12.8Z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenuPanel">
+      <svg class="icon-burger" width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 0H16V2H0V0ZM8 4H16V6H8V4ZM0 8V10H16V8H0ZM8 12H16V14H8V12Z" fill="currentColor"/>
+      </svg>
+      <svg class="icon-close" width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 0H2V2H0V0ZM4 4H2V2H4V4ZM6 6H4V4H6V6ZM8 6H6V8H4V10H2V12H0V14H2V12H4V10H6V8H8V10H10V12H12V14H14V12H12V10H10V8H8V6ZM10 4V6H8V4H10ZM12 2V4H10V2H12ZM12 2V0H14V2H12Z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <div class="mobile-menu" id="mobileMenuPanel" aria-label="Mobile menu">
+    <a class="nav-link" href="#reviews">Reviews</a>
+    <a class="nav-link" href="#works">Works</a>
+    <a class="nav-link" href="#videos">Videos</a>
+    <a class="nav-link" href="#team">Team</a>
+    </div>
+  </nav>
+
+  <section id="home">
+    <div class="Title">
+      <div class="content">
+        <h1>Bricky Studios</h1>
+        <p>
+          A small Minecraft studio that completes
+          <span class="highlight">commissions</span>,<br>
+          and sells <span class="highlight">pre-made packs</span> as commission work.
+        </p>
+
+        <div class="button-count">
+          <a class="discord-btn" href="https://discord.gg/brickystudios" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord">
+            <span class="discord-state discord-state-default" aria-hidden="true">
+              <svg width="21" height="17" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6V7H4V8H0V1H1V0H9V1H10V8H6V7H7V6H3ZM2 5H4V3H2V5ZM6 5H8V3H6V5Z" fill="currentColor"/>
+              </svg>
+              <span class="discord-label">Discord</span>
+            </span>
+
+            <span class="discord-state discord-state-hover" aria-hidden="true">
+              <span class="discord-label">Discord</span>
+              <svg class="discord-icon" width="19" height="17" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+              </svg>
+            </span>
+          </a>
+
+          <div class="online-count">
+            <div class="green-dot"></div>
+            <span class="number" id="online">n/a</span>
+            <span>Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reviews" style="padding: 96px 16px 48px; color: var(--text); text-align: center;">
+    <h2 style="font-family: mctitle; font-size: 48px; margin: 0 0 16px;">Reviews</h2>
+    <p style="font-family: mctext; font-size: 16px; margin: 0;">What clients say about our commissions and packs.</p>
+    <div class="reviews-carousel" aria-label="Client reviews">
+      <div class="reviews-row">
+        <button class="gallery-btn" type="button" id="reviewsPrev" aria-label="Previous review">
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 0V2H6V0H8ZM4 4V2H6V4H4ZM2 6V4H4V6H2ZM2 8H0V6H2V8ZM4 10V8H2V10H4ZM4 10H6V12H4V10ZM8 14V12H6V14H8Z" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <article class="review-card" id="reviewCard">
+          <div class="review-top">
+            <div class="review-name" id="reviewName">ClientName#0001</div>
+            <div class="review-stars" id="reviewStars" aria-label="5 stars"></div>
+          </div>
+          <div class="review-text" id="reviewText">Fast delivery, super clean build style, and great communication throughout the commission.</div>
+        </article>
+
+        <button class="gallery-btn" type="button" id="reviewsNext" aria-label="Next review">
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0V2H2V0H0ZM4 4V2H2V4H4ZM6 6V4H4V6H6ZM6 8H8V6H6V8ZM4 10V8H6V10H4ZM4 10H2V12H4V10ZM0 14V12H2V14H0Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="reviews-dots" id="reviewsDots" aria-label="Reviews pagination"></div>
+    </div>
+  </section>
+
+  <section id="works" style="min-height: 100vh; padding: 96px 16px; color: var(--text); text-align: center;">
+    <h2 style="font-family: mctitle; font-size: 48px; margin: 0 0 16px;">Works</h2>
+    <p style="font-family: mctext; font-size: 16px; margin: 0;">Content placeholder section.</p>
+
+    <div class="works-gallery" aria-label="Works gallery">
+      <div class="gallery-row">
+        <button class="gallery-btn" type="button" id="galleryPrev" aria-label="Previous image">
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 0V2H6V0H8ZM4 4V2H6V4H4ZM2 6V4H4V6H2ZM2 8H0V6H2V8ZM4 10V8H2V10H4ZM4 10H6V12H4V10ZM8 14V12H6V14H8Z" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <img id="galleryImage" class="gallery-image" src="images/work-1.png" alt="Work 1">
+
+        <button class="gallery-btn" type="button" id="galleryNext" aria-label="Next image">
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0V2H2V0H0ZM4 4V2H2V4H4ZM6 6V4H4V6H6ZM6 8H8V6H6V8ZM4 10V8H6V10H4ZM4 10H2V12H4V10ZM0 14V12H2V14H0Z" fill="currentColor"/>
+          </svg>    
+        </button>
+      </div>
+
+      <div class="gallery-dots" id="galleryDots" aria-label="Gallery pagination"></div>
+    </div>
+  </section>
+
+  <section id="videos" style="padding: 96px 16px 48px; color: var(--text); text-align: center;">
+    <h2 style="font-family: mctitle; font-size: 48px; margin: 0 0 16px;">Videos</h2>
+    <p style="font-family: mctext; font-size: 16px; margin: 0;">Showcases, previews, and behind the scenes.</p>
+
+    <div class="works-videos" aria-label="Works videos">
+      <div class="video-shell">
+        <div class="video-frame">
+          <video id="worksVideo" preload="metadata" playsinline>
+            <source src="imgs/auction_house_showcase.mov" type="video/mp4">
+          </video>
+        </div>
+
+        <div class="video-controls" aria-label="Video controls">
+          <button class="vbtn" id="vPlay" type="button" aria-label="Play">
+            <svg class="icon icon-play is-visible" width="8" height="16" viewBox="0 0 8 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+               <path d="M2 16H0V0H2V2H4V5H6V7H8V9H6V11H4V14H2V16Z" fill="currentColor"/>
+             </svg>
+             <svg class="icon icon-pause" width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+               <path d="M5 0H0V16H5V0ZM14 0H9V16H14V0Z" fill="currentColor"/>
+             </svg>
+          </button>
+
+          <div class="time-readout"><span id="vTime">0:00</span> / <span id="vDur">0:00</span></div>
+
+          <div class="seek" aria-label="Seek">
+            <input id="vSeek" type="range" min="0" max="100" value="0" step="0.1">
+          </div>
+
+          <div class="volume" aria-label="Volume">
+  <button class="vbtn vbtn-mute" id="vMute" type="button" aria-label="Mute">
+    <svg class="icon icon-vol is-visible" width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M8 0H10V20H8V18H6V16H8V4H6V2H8V0ZM4 6V4H6V6H4ZM4 14H0V6H4V8H2V12H4V14ZM4 14V16H6V14H4ZM14 8H12V12H14V8ZM16 6H18V14H16V6ZM16 14V16H12V14H16ZM16 4V6H12V4H16Z" fill="currentColor"/>
+    </svg>
+    <svg class="icon icon-muted" width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M10 0H8V2H6V4H4V6H0V14H4V16H6V18H8V20H10V0ZM6 16V14H4V12H2V8H4V6H6V4H8V16H6ZM16 9.223H14V7.223H12V9.223H14V11.223H12V13.223H14V11.223H16V13.223H18V11.223H16V9.223ZM16 9.223H18V7.223H16V9.223Z" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <input id="vVol" type="range" min="0" max="1" value="0.8" step="0.01" aria-label="Volume slider">
+</div>
+
+          <button class="vbtn" id="vFs" type="button" aria-label="Enter fullscreen">
+  <svg class="icon icon-fs-enter is-visible" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M8 8H4V7H6V6H7V4H8V8ZM6 6H5V5H6V6ZM5 5H4V4H5V5ZM4 1H2V2H1V4H0V0H4V1ZM4 4H3V3H4V4ZM3 3H2V2H3V3Z" fill="currentColor"/>
+  </svg>
+  <svg class="icon icon-fs-exit" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M8 5H6V6H5V8H4V4H8V5ZM8 8H7V7H8V8ZM7 7H6V6H7V7ZM4 4H0V3H2V2H3V0H4V4ZM2 2H1V1H2V2ZM1 1H0V0H1V1Z" fill="currentColor"/>
+  </svg>
+</button>
+        </div>
+      </div>
+
+      <div class="video-list" id="videoList" aria-label="Video list">
+        <button class="video-pill active" type="button" data-src="imgs/auction_house_showcase.mov">Auction House Configuration</button>
+        <!--<button class="video-pill" type="button" data-src="imgs/rickroll.mp4">Rick Roll</button>-->
+        <!--<button class="video-pill" type="button" data-src="imgs/rickroll1.mp4">Rick Roll2</button>-->
+      </div>
+    </div>
+  </section>
+
+  <section id="team" style="padding: 96px 16px 48px; color: var(--text); text-align: center;">
+    <h2 style="font-family: mctitle; font-size: 48px; margin: 0 0 16px;">Team</h2>
+    <p style="font-family: mctext; font-size: 16px; margin: 0;">Meet the people behind Bricky Studios.</p>
+
+    <div class="team-grid">
+      <article class="team-card">
+        <div class="team-header">
+          <img class="team-head" src="imgs/M4rk_skull.png" alt="M4rk_skull">
+          <div class="team-name-row">
+            <div class="team-name">M4rk._.</div>
+            <span class="role-badge rb-owner" aria-hidden="true">
+              <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 4V1H1V2H2V0H4V2H5V1H6V4H0Z" fill="#E7F2FF"/>
+                <path d="M0 6V5H6V6H0Z" fill="#E7F2FF"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="team-tags">
+          <span class="team-tag blue">Textures</span>
+          <span class="team-tag green">Models</span>
+          <span class="team-tag purple">Titles</span>
+          <span class="team-tag red">Configs</span>
+        </div>
+
+        <div class="team-desc">
+          Textures, models, and titles — plus config setup to keep packs consistent, clean, and ready to ship.
+        </div>
+
+        <div class="team-social">
+          <a class="social-swap" href="https://discord.com/users/660439096476434432" aria-label="M4rk._. on Discord">
+            <svg class="icon-default" width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 6V7H4V8H0V1H1V0H9V1H10V8H6V7H7V6H3ZM2 5H4V3H2V5ZM6 5H8V3H6V5Z" fill="currentColor"/>
+            </svg>
+            <svg class="icon-hover" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="team-card">
+        <div class="team-header">
+          <img class="team-head" src="imgs/Majozi_skull.png" alt="Majozi_skull">
+          <div class="team-name-row">
+            <div class="team-name">Majozi</div>
+            <span class="role-badge rb-team" aria-hidden="true">
+              <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 0H1V4H5V0Z" fill="#E7F2FF"/>
+                <path d="M0 6V5H6V6H0Z" fill="#E7F2FF"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="team-tags">
+          <span class="team-tag blue">Textures</span>
+          <span class="team-tag green">Models</span>
+          <span class="team-tag red">Configs</span>
+        </div>
+
+        <div class="team-desc">
+          Works on textures and models, and handles config tuning so everything fits together and behaves correctly in-game.
+        </div>
+
+        <div class="team-social">
+          <a class="social-swap" href="https://discord.com/users/215551904007192597" aria-label="Majozi on Discord">
+            <svg class="icon-default" width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 6V7H4V8H0V1H1V0H9V1H10V8H6V7H7V6H3ZM2 5H4V3H2V5ZM6 5H8V3H6V5Z" fill="currentColor"/>
+            </svg>
+            <svg class="icon-hover" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="team-card">
+        <div class="team-header">
+          <img class="team-head" src="imgs/Bali_skull.png" alt="Bali0531_skull">
+          <div class="team-name-row">
+            <div class="team-name">bali0531</div>
+            <span class="role-badge rb-dev" aria-hidden="true">
+              <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 0H4V1H3V3H5V1H6V4H3V5H2V6H0V4H1V3H2V0Z" fill="#E7F2FF"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="team-tags">
+          <span class="team-tag orange">Plugins</span>
+        </div>
+
+        <div class="team-desc">
+          Plugin development and server-side features — building the systems that power custom gameplay and functionality.
+        </div>
+
+        <div class="team-social">
+          <a class="social-swap" href="https://discord.com/users/1141211789552537691" aria-label="bali0531 on Discord">
+            <svg class="icon-default" width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 6V7H4V8H0V1H1V0H9V1H10V8H6V7H7V6H3ZM2 5H4V3H2V5ZM6 5H8V3H6V5Z" fill="currentColor"/>
+            </svg>
+            <svg class="icon-hover" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+            </svg>
+          </a>
+          <a class="social-swap" href="https://github.com/Bali0531-RC" aria-label="bali0531 on GitHub">
+            <svg class="icon-default" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 1H7V0H8V5H7V8H3V7H1V6H3V5H2V0H3V1ZM1 5V6H0V5H1Z" fill="currentColor"/>
+            </svg>
+            <svg class="icon-hover" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="site-footer" aria-label="Site footer">
+    <div class="footer-inner">
+      <div class="footer-copy">
+        <span class="footer-copy-text footer-copy-inline footer-copy-stack">
+          <span class="footer-copy-top">
+            <svg width="12" height="12" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 2V7H8V8H7V9H2V8H1V7H2V8H7V7H8V2H9ZM7 0V1H8V2H7V1H2V2H1V7H0V2H1V1H2V0H7ZM6 7H3V6H6V7ZM3 6H2V3H3V6ZM6 3H3V2H6V3Z" fill="currentColor"/>
+            </svg>
+            <span class="footer-copy-main">
+              <span id="year"></span> Bricky Studios
+            </span>
+          </span>
+          <span class="footer-copy-bottom">All rights reserved.</span>
+        </span>
+        <a href="/rules" class="footer-rules footer-rules-swap" aria-label="Open rules">
+          <span class="rules-icon" aria-hidden="true">
+            <svg class="icon-default" width="15" height="12" viewBox="0 0 15 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.36364 0H6.81818V1.33333H1.36364V9.33333H6.81818V1.33333H8.18182V9.33333H13.6364V1.33333H8.18182V0H15V10.6667H8.18182V12H6.81818V10.6667H0V0H1.36364ZM12.2727 4.66667H9.54545V6H12.2727V4.66667ZM9.54545 2.66667H12.2727V4H9.54545V2.66667ZM10.9091 6.66667H9.54545V8H10.9091V6.66667Z" fill="currentColor"/>
+            </svg>
+            <svg class="icon-hover" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 5.33333V0H6.66667V1.33333H9.33333V2.66667H8V4H6.66667V5.33333H5.33333V6.66667H4V8H5.33333V6.66667H6.66667V5.33333H8V4H9.33333V2.66667H10.6667V5.33333H12ZM5.33333 1.33333H0V12H10.6667V6.66667H9.33333V10.6667H1.33333V2.66667H5.33333V1.33333Z" fill="currentColor"/>
+</svg>
+
+          </span>
+          <span class="rules-label">Rules</span>
+        </a>
+      </div>
+
+      <div class="footer-social" aria-label="Social links">
+        <a class="social-swap" href="https://discord.gg/brickystudios" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+          <svg class="icon-default" width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 6V7H4V8H0V1H1V0H9V1H10V8H6V7H7V6H3ZM2 5H4V3H2V5ZM6 5H8V3H6V5Z" fill="currentColor"/>
+          </svg>
+          <svg class="icon-hover" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M18 8V0H10V2H14V4H12V6H10V8H8V10H6V12H8V10H10V8H12V6H14V4H16V8H18ZM8 2H0V18H16V10H14V16H2V4H8V2Z" fill="currentColor"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <button class="scroll-down" type="button" aria-label="Scroll to Reviews" id="scrollToReviews">
+    <svg class="jump" type="button" aria-label="Scroll to Reviews" id="scrollToReviews" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.25 0H6.75V6H8.25V7.5H6.75V9H5.25V7.5H3.75V6H5.25V0ZM3.75 6H2.25V4.5H3.75V6ZM8.25 6V4.5H9.75V6H8.25ZM0 10.5H12V12H0V10.5Z" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <button class="theme-toggle theme-toggle--mobile" type="button" aria-label="Toggle dark/light mode">
+  <svg class="icon-sun" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sun">
+    <path d="M17.3333 0H14.6667V5.33333H17.3333V0ZM0 14.6667V17.3333H5.33333V14.6667H0ZM32 14.6667V17.3333H26.6667V14.6667H32ZM17.3333 32H14.6667V26.6667H17.3333V32ZM10.6667 8H21.3333V10.6667H10.6667V8ZM8 10.6667H10.6667V21.3333H8V10.6667ZM10.6667 24V21.3333H21.3333V24H10.6667ZM24 21.3333H21.3333V10.6667H24V21.3333ZM26.6667 2.66667H29.3333V5.33333H26.6667V2.66667ZM26.6667 5.33333V8H24V5.33333H26.6667ZM29.3333 29.3333H26.6667V26.6667H29.3333V29.3333ZM26.6667 26.6667H24V24H26.6667V26.6667ZM5.33333 2.66667H2.66667V5.33333H5.33333V8H8V5.33333H5.33333V2.66667ZM2.66667 29.3333H5.33333V26.6667H8V24H5.33333V26.6667H2.66667V29.3333Z" fill="currentColor"/>
+  </svg>
+
+  <svg class="icon-moon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Moon">
+    <path d="M6.4 0H19.2V3.2H16V6.4H12.8V3.2H6.4V0ZM3.2 6.4V3.2H6.4V6.4H3.2ZM3.2 22.4H0V6.4H3.2V22.4ZM6.4 25.6H3.2V22.4H6.4V25.6ZM9.6 28.8H6.4V25.6H9.6V28.8ZM25.6 28.8V32H9.6V28.8H25.6ZM28.8 25.6V28.8H25.6V25.6H28.8ZM25.6 19.2H28.8V25.6H32V12.8H28.8V16H25.6V19.2ZM16 19.2V22.4H25.6V19.2H16ZM12.8 16H16V19.2H12.8V16ZM12.8 16V6.4H9.6V16H12.8Z" fill="currentColor"/>
+  </svg>
+</button>
+
+  <script>
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = `${name}=${encodeURIComponent(value)}; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
+    }
+
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\\[\\]\\\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    }
+
+    applyTheme(getCookie('theme') || 'dark');
+
+    // Footer year
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+    // ---- Reviews carousel (5 items) ----
+    const reviews = [
+      {
+        name: 'warriorhunyt123',
+        stars: 5,
+        text: 'I am satisfied with the quality of the work and the speed of delivery. The support team responded quickly and was helpful when needed.'
+      },
+      {
+        name: 'lush01',
+        stars: 5,
+        text: 'He did a quick and nice job, my order was ready in a few hours.'
+      }
+    ];
+
+    let reviewIndex = 0;
+
+    const reviewNameEl = document.getElementById('reviewName');
+    const reviewStarsEl = document.getElementById('reviewStars');
+    const reviewTextEl = document.getElementById('reviewText');
+    const reviewsPrev = document.getElementById('reviewsPrev');
+    const reviewsNext = document.getElementById('reviewsNext');
+    const reviewsDots = document.getElementById('reviewsDots');
+
+    function renderReviewStars(n) {
+    const count = Math.max(0, Math.min(5, n));
+
+    const filled = `
+      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M3 2V0H5V2H8V4H7V5H8V8H5V7H3V8H0V5H1V4H0V2H3Z" fill="currentColor"/>
+      </svg>
+    `;
+
+    const outline = `
+      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 5H1V7H3V6H5V7H7V5H8V8H5V7H3V8H0V5H1V4H2V5ZM3 2V3H1V4H0V2H3V0H5V2H8V4H7V5H6V4H7V3H5V2H3Z" fill="currentColor"/>
+      </svg>
+
+    `;
+
+    let html = '';
+    for (let i = 0; i < 5; i++) html += i < count ? filled : outline;
+    return html;
+  }
+
+    function renderReviewsDots() {
+      if (!reviewsDots) return;
+      reviewsDots.innerHTML = '';
+      reviews.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'reviews-dot' + (i === reviewIndex ? ' active' : '');
+        b.setAttribute('aria-label', `Go to review ${i + 1}`);
+        b.addEventListener('click', () => {
+          reviewIndex = i;
+          updateReview();
+        });
+        reviewsDots.appendChild(b);
+      });
+    }
+
+    function updateReview() {
+      const r = reviews[reviewIndex];
+      if (reviewNameEl) reviewNameEl.textContent = r.name;
+      if (reviewStarsEl) {
+        reviewStarsEl.innerHTML = renderReviewStars(r.stars);
+        reviewStarsEl.setAttribute('aria-label', `${r.stars} stars`);
+      }
+      if (reviewTextEl) reviewTextEl.textContent = r.text;
+
+      const dots = reviewsDots ? Array.from(reviewsDots.querySelectorAll('.reviews-dot')) : [];
+      dots.forEach((d, i) => d.classList.toggle('active', i === reviewIndex));
+    }
+
+    function prevReview() {
+      reviewIndex = (reviewIndex - 1 + reviews.length) % reviews.length;
+      updateReview();
+    }
+
+    function nextReview() {
+      reviewIndex = (reviewIndex + 1) % reviews.length;
+      updateReview();
+    }
+
+    reviewsPrev?.addEventListener('click', prevReview);
+    reviewsNext?.addEventListener('click', nextReview);
+
+    renderReviewsDots();
+    updateReview();
+
+    // ---- Navbar active link (stable scroll spy) ----
+    const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+    const navHome = document.querySelector('.nav-center');
+    const homeSection = document.getElementById('home');
+
+    const scrollToReviewsBtn = document.getElementById('scrollToReviews');
+    let scrollDownDismissed = false;
+    let isAutoScrolling = false;
+
+    function isPhone() {
+      return window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+    }
+
+    function setScrollDownVisible(isHome) {
+      if (!scrollToReviewsBtn) return;
+
+      // Never show on phones
+      if (isPhone()) {
+        scrollToReviewsBtn.classList.remove('is-visible');
         return;
       }
 
-      snake.unshift(head);
-
-      if (head.x === food.x && head.y === food.y) {
-        score++;
-        scoreEl.innerText = score;
-        if (score > highscore) highscoreEl.innerText = score;
-        food = spawnFood();
-      } else {
-        snake.pop();
+      // Don't show while we're doing any programmatic scrolling (prevents early flash)
+      if (isAutoScrolling) {
+        scrollToReviewsBtn.classList.remove('is-visible');
+        return;
       }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = snakeColor;
-      snake.forEach(part => ctx.fillRect(part.x, part.y, box, box));
-
-      ctx.fillStyle = foodColor;
-      ctx.fillRect(food.x, food.y, box, box);
-
-      gameLoop();
-    }, speed);
-  }
-
-  function spawnFood() {
-    let newFood;
-    do {
-      newFood = {
-        x: Math.floor(Math.random() * cols) * box,
-        y: Math.floor(Math.random() * rows) * box
-      };
-    } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
-    return newFood;
-  }
-
-  // Keyboard control
-  document.addEventListener("keydown", (e) => {
-    if (isCountingDown) return;
-    const key = e.key.toLowerCase();
-    if ((key === "w" || key === "arrowup") && direction.y === 0) nextDirection = { x: 0, y: -1 };
-    if ((key === "s" || key === "arrowdown") && direction.y === 0) nextDirection = { x: 0, y: 1 };
-    if ((key === "a" || key === "arrowleft") && direction.x === 0) nextDirection = { x: -1, y: 0 };
-    if ((key === "d" || key === "arrowright") && direction.x === 0) nextDirection = { x: 1, y: 0 };
-    if (key === "p") {
-      playing ? stopGame() : startGame();
-      return;
+      // Only show when we're truly at the top AND home is the active section
+      const atTop = window.scrollY <= 4;
+      const shouldShow = isHome && atTop && !scrollDownDismissed;
+      scrollToReviewsBtn.classList.toggle('is-visible', shouldShow);
     }
-    if (!playing) startGame();
-  });
 
-  // Touch control
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let lastTap = 0;
+    let scrollAnimRAF = 0;
+    let scrollAnimCancel = false;
 
+    // Simple constant-velocity scroll (no easing)
+    function smoothScrollToY(targetY) {
+      // cancel any in-flight animation
+      scrollAnimCancel = true;
+      if (scrollAnimRAF) {
+        cancelAnimationFrame(scrollAnimRAF);
+        scrollAnimRAF = 0;
+      }
+      scrollAnimCancel = false;
 
-  canvas.addEventListener("touchmove", (e) => {
-    if (isCountingDown) return;
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 20 && direction.x === 0) nextDirection = { x: 1, y: 0 };
-      else if (dx < -20 && direction.x === 0) nextDirection = { x: -1, y: 0 };
-    } else {
-      if (dy > 20 && direction.y === 0) nextDirection = { x: 0, y: 1 };
-      else if (dy < -20 && direction.y === 0) nextDirection = { x: 0, y: -1 };
+      const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduce) {
+        window.scrollTo(0, targetY);
+        return;
+      }
+
+      const speedPxPerSec = 2800; // constant speed (fast)
+      let currentY = window.scrollY;
+      const dir = targetY > currentY ? 1 : -1;
+
+      isAutoScrolling = true;
+      let lastNow = performance.now();
+
+      function step(now) {
+        if (scrollAnimCancel) return;
+
+        const dt = Math.max(0, now - lastNow);
+        lastNow = now;
+
+        currentY = window.scrollY;
+        const remaining = targetY - currentY;
+
+        // done (or we overshot)
+        if (dir * remaining <= 0.5) {
+          window.scrollTo(0, targetY);
+          scrollAnimRAF = 0;
+          setTimeout(() => {
+            isAutoScrolling = false;
+            // Recompute active section + re-show scroll-down if we're truly home/top
+            requestUpdate();
+            setScrollDownVisible(computeActiveSectionId() === 'home');
+          }, 60);
+          return;
+        }
+
+        const stepPx = (speedPxPerSec * dt) / 1000;
+        const nextY = currentY + dir * Math.min(Math.abs(remaining), stepPx);
+        window.scrollTo(0, nextY);
+
+        scrollAnimRAF = requestAnimationFrame(step);
+      }
+
+      scrollAnimRAF = requestAnimationFrame(step);
     }
-    if (!playing) startGame();
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-  });
 
-  // Theme switch
-  function setTheme(theme) {
-    setCookie("theme", theme, 365);
-    switch (theme) {
-      case "christmas":
-        snakeColor = "white";
-        foodColor = "red";
-        break;
-      case "neon":
-        snakeColor = "#0ff";
-        foodColor = "#f0f";
-        break;
-      case "classic":
-      default:
-        snakeColor = "lime";
-        foodColor = "red";
-        break;
+    function dismissScrollDown() {
+      scrollDownDismissed = true;
+      if (scrollToReviewsBtn) scrollToReviewsBtn.classList.remove('is-visible');
     }
-  }
 
-  // Difficulty switch
-  function setDifficulty(level) {
-    setCookie("difficulty", level, 365);
-    switch (level) {
-      case "easy":
-        speed = 200;
-        break;
-      case "hard":
-        speed = 60;
-        break;
-      case "normal":
-      default:
-        speed = 100;
-        break;
+    // If user starts scrolling, hide the button (but ignore programmatic auto-scroll)
+    window.addEventListener('scroll', () => {
+      if (!scrollToReviewsBtn) return;
+      if (isPhone()) return;
+
+      const y = window.scrollY;
+      const atTop = y <= 4; // tolerance
+
+      // If we returned to the very top and HOME is the active section, allow showing again
+      // IMPORTANT: don't re-show during programmatic auto-scroll (prevents 1-frame flash)
+      if (atTop) {
+        if (isAutoScrolling) return;
+
+        const isHomeNow = computeActiveSectionId() === 'home';
+        if (isHomeNow) {
+          scrollDownDismissed = false;
+          setScrollDownVisible(true);
+        } else {
+          setScrollDownVisible(false);
+        }
+        return;
+      }
+
+      // As soon as the user scrolls down, hide (ignore programmatic auto-scroll)
+      const isVisible = scrollToReviewsBtn.classList.contains('is-visible');
+      if (isVisible && !isAutoScrolling) dismissScrollDown();
+    }, { passive: true });
+
+    // ---- Mobile hamburger menu ----
+    const navbarEl = document.querySelector('.navbar');
+    const navToggle = document.querySelector('.nav-toggle');
+
+    function closeMobileMenu() {
+      if (!navbarEl) return;
+      navbarEl.classList.remove('menu-open');
+      if (navToggle) {
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.setAttribute('aria-label', 'Open menu');
+      }
     }
-  }
 
-  function setCookie(name, value, days) {
-    const expires = new Date(Date.now() + days * 86400000).toUTCString();
-    document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-  }
-
-  function getCookie(name) {
-    const cookies = document.cookie.split("; ");
-    for (let c of cookies) {
-      const [key, val] = c.split("=");
-      if (key === name) return val;
+    function toggleMobileMenu() {
+      if (!navbarEl) return;
+      const nextOpen = !navbarEl.classList.contains('menu-open');
+      navbarEl.classList.toggle('menu-open', nextOpen);
+      if (navToggle) {
+        navToggle.setAttribute('aria-expanded', String(nextOpen));
+        navToggle.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
+      }
     }
-    return null;
-  }
 
-  // Dropdown működés
-  document.querySelectorAll(".dropdown").forEach(dropdown => {
-    const button = dropdown.querySelector("button");
-    const menu = dropdown.querySelector(".dropdown-content");
+    navToggle?.addEventListener('click', toggleMobileMenu);
 
-    button.addEventListener("click", (e) => {
-      e.stopPropagation();
-      document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
-      menu.style.display = "flex";
-    });
+    // Smooth-scroll navigation (prevents hash jump + wrong active section)
+    function scrollToSectionId(id) {
+      const section = document.getElementById(id);
+      if (!section) return;
 
-    menu.querySelectorAll("button").forEach(option => {
-      option.addEventListener("click", () => {
-        menu.style.display = "none";
+      const navH = getNavbarHeight();
+      const bufferTop = 16;
+      const bufferBottom = 24;
+
+      // Base: align section top so heading/intro are visible
+      const sectionTopAbs = section.getBoundingClientRect().top + window.scrollY;
+      const baseY = Math.max(0, sectionTopAbs - navH - bufferTop);
+
+      let y = baseY;
+
+      // Desktop-only: ensure important bottom is visible, but never scroll past the heading block
+      if (window.innerWidth >= 769 && (id === 'works' || id === 'videos')) {
+        const h2 = section.querySelector('h2');
+        const p = section.querySelector('p');
+
+        // maxY keeps the heading block still visible (we don't want to scroll so far that it disappears)
+        let headingBottomAbs = sectionTopAbs;
+        if (h2) headingBottomAbs = Math.max(headingBottomAbs, h2.getBoundingClientRect().bottom + window.scrollY);
+        if (p) headingBottomAbs = Math.max(headingBottomAbs, p.getBoundingClientRect().bottom + window.scrollY);
+        const maxY = Math.max(0, headingBottomAbs - navH - bufferTop);
+
+        // Choose important element per section
+        let important = null;
+        if (id === 'works') {
+          important = section.querySelector('#galleryDots') || section.querySelector('.gallery-dots');
+        } else if (id === 'videos') {
+          important = section.querySelector('.video-shell');
+        }
+
+        if (important) {
+          const importantBottomAbs = important.getBoundingClientRect().bottom + window.scrollY;
+
+          // Need enough scroll so important bottom fits in viewport
+          const neededY = Math.max(baseY, importantBottomAbs - window.innerHeight + bufferBottom);
+
+          // Clamp so heading remains visible
+          y = Math.min(neededY, maxY);
+        }
+      }
+
+      y = Math.max(0, y);
+
+      isAutoScrolling = true;
+      smoothScrollToY(y);
+
+      // update URL hash without triggering native jump
+      try {
+        history.pushState(null, '', `#${id}`);
+      } catch (_) {}
+
+      setTimeout(() => {
+  isAutoScrolling = false;
+  requestUpdate();
+}, 1000);
+    }
+
+    // Close + smooth scroll when selecting any link (mobile + desktop)
+    navLinks.forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href')?.slice(1);
+        if (!id) return;
+        e.preventDefault();
+
+        closeMobileMenu();
+        setActive(id);
+        scrollToSectionId(id);
       });
     });
-  });
 
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".dropdown-content").forEach(menu => {
-      menu.style.display = "none";
+    // Center logo: scroll to top (no hash jump)
+    navHome?.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeMobileMenu();
+      setActive('home');
+
+      isAutoScrolling = true;
+      smoothScrollToY(0);
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch (_) {}
+      setTimeout(() => {
+        isAutoScrolling = false;
+        requestUpdate();
+        setScrollDownVisible(computeActiveSectionId() === 'home');
+      }, 980);
     });
-  });
 
-pauseBtn.disabled = true;
+    // Close if user resizes back to desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 480) closeMobileMenu();
+      // keep scroll-down button correct when crossing breakpoints
+      setScrollDownVisible(computeActiveSectionId() === 'home');
+    });
 
-pauseBtn.addEventListener("click", () => {
-  if (playing) {
-    stopGame();
-  } else {
-    startGame();
-  }
-});
+    const sectionEls = [
+      homeSection,
+      ...navLinks
+        .map(a => a.getAttribute('href'))
+        .filter(Boolean)
+        .map(h => document.querySelector(h))
+        .filter(Boolean)
+    ].filter(Boolean);
 
-document.addEventListener("keydown", (e) => {
-  if (isCountingDown) return;
+    function setActive(id) {
+      navLinks.forEach(a => {
+        const target = a.getAttribute('href')?.slice(1);
+        a.classList.toggle('active', target === id);
+      });
 
-  const key = e.key.toLowerCase();
-  if ((key === "w" || key === "arrowup") && direction.y === 0) nextDirection = { x: 0, y: -1 };
-  if ((key === "s" || key === "arrowdown") && direction.y === 0) nextDirection = { x: 0, y: 1 };
-  if ((key === "a" || key === "arrowleft") && direction.x === 0) nextDirection = { x: -1, y: 0 };
-  if ((key === "d" || key === "arrowright") && direction.x === 0) nextDirection = { x: 1, y: 0 };
+      if (navHome) navHome.classList.toggle('active', id === 'home');
+      if (id === 'home') navLinks.forEach(a => a.classList.remove('active'));
 
-  if (key === " " || key === "spacebar") {
-    e.preventDefault(); // Ne scrollozzon le
-    if (playing) {
-      stopGame();
-    } else {
-      startGame();
+      // show scroll-down button only on home
+      setScrollDownVisible(id === 'home');
     }
-    return;
-  }
 
-  if (!playing) startGame();
+    function getNavbarHeight() {
+      const nav = document.querySelector('.navbar');
+      return nav ? nav.getBoundingClientRect().height : 72;
+    }
+
+    // Determine active section by scroll position relative to section tops.
+    function computeActiveSectionId() {
+      // Probe point used for scroll-spy.
+      // On phones we look deeper into the viewport, otherwise it tends to stay on the previous section.
+      const navH = getNavbarHeight();
+      // desktopon is mélyebbre nézünk, különben sokszor az előző section marad aktív
+      const extra = isPhone() ? 80 : 140;
+      const y = window.scrollY + navH + extra;
+
+      // Precompute current tops
+      const tops = sectionEls.map(el => ({
+        id: el.id,
+        top: el.getBoundingClientRect().top + window.scrollY
+      })).sort((a, b) => a.top - b.top);
+
+      // If we're above the first non-home section start, keep home active.
+      const firstNonHome = tops.find(t => t.id !== 'home');
+      if (firstNonHome && y < firstNonHome.top) return 'home';
+
+      // Pick the last section whose top is <= y
+      let current = 'home';
+      for (const t of tops) {
+        if (t.top <= y) current = t.id;
+        else break;
+      }
+      return current;
+    }
+
+    // rAF throttling for smoothness
+    let ticking = false;
+    function requestUpdate() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+      ticking = false;
+
+    // Don't let scroll-spy fight programmatic nav scrolling
+     if (isAutoScrolling) return;
+
+     setActive(computeActiveSectionId());
+    });
+    }
+
+    // Initial state
+    if (location.hash && document.querySelector(location.hash)?.id) {
+      setActive(document.querySelector(location.hash).id);
+    } else {
+      setActive('home');
+    }
+
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+
+
+    scrollToReviewsBtn?.addEventListener('click', () => {
+      const target = document.getElementById('reviews');
+      if (!target) return;
+
+      // Hide immediately once user interacts
+      dismissScrollDown();
+
+      // Scroll a bit slower, and account for fixed navbar height
+      const navH = getNavbarHeight();
+      const y = target.getBoundingClientRect().top + window.scrollY - navH - 8;
+      smoothScrollToY(Math.max(0, y));
+
+      setActive('reviews');
+      closeMobileMenu();
+    });
+
+    // Run once after load to sync
+    requestUpdate();
+    // ensure scroll-down button state is correct on load
+    setScrollDownVisible(computeActiveSectionId() === 'home');
+
+    // ---- Works gallery (10 items) ----
+    const galleryImages = [
+      'imgs/animal_carpets.png',
+      'imgs/auction_house.png',
+      'imgs/snow_blocks.png'
+    ];
+
+    let galleryIndex = 0;
+    let galleryTimer = null;
+
+    function startGalleryAuto() {
+      stopGalleryAuto();
+      galleryTimer = setInterval(() => {
+        nextGallery();
+      }, 5000);
+    }
+
+    function stopGalleryAuto() {
+      if (galleryTimer) {
+        clearInterval(galleryTimer);
+        galleryTimer = null;
+      }
+    }
+
+    function resetGalleryAuto() {
+      startGalleryAuto();
+    }
+
+    const galleryImgEl = document.getElementById('galleryImage');
+    const prevBtn = document.getElementById('galleryPrev');
+    const nextBtn = document.getElementById('galleryNext');
+    const dotsWrap = document.getElementById('galleryDots');
+
+    function renderDots() {
+      if (!dotsWrap) return;
+      dotsWrap.innerHTML = '';
+
+      galleryImages.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'gallery-dot' + (i === galleryIndex ? ' active' : '');
+        b.setAttribute('aria-label', `Go to image ${i + 1}`);
+
+        // inner fill span for reliable opacity transition
+        const fill = document.createElement('span');
+        fill.className = 'dot-fill';
+        fill.setAttribute('aria-hidden', 'true');
+        b.appendChild(fill);
+
+        b.addEventListener('click', () => {
+          galleryIndex = i;
+          updateGallery();
+          resetGalleryAuto();
+        });
+
+        dotsWrap.appendChild(b);
+      });
+    }
+
+    function updateGallery() {
+      if (!galleryImgEl) return;
+      const src = galleryImages[galleryIndex];
+
+      // Set src/alt first
+      galleryImgEl.src = src;
+      galleryImgEl.alt = `Work ${galleryIndex + 1}`;
+
+      // When the image loads, set aspect-ratio to match the real image so there is no empty area in the frame.
+      // Fallback to 16/9 if dimensions are not available yet.
+      const applyRatio = () => {
+        const w = galleryImgEl.naturalWidth;
+        const h = galleryImgEl.naturalHeight;
+        if (w > 0 && h > 0) {
+          galleryImgEl.style.aspectRatio = `${w} / ${h}`;
+        } else {
+          galleryImgEl.style.aspectRatio = '16 / 9';
+        }
+      };
+
+      // If already cached/loaded, apply immediately; otherwise wait for load.
+      if (galleryImgEl.complete) {
+        applyRatio();
+      } else {
+        galleryImgEl.addEventListener('load', applyRatio, { once: true });
+      }
+
+      const dots = dotsWrap ? Array.from(dotsWrap.querySelectorAll('.gallery-dot')) : [];
+      dots.forEach((d, i) => d.classList.toggle('active', i === galleryIndex));
+    }
+
+    function prevGallery() {
+      galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length;
+      updateGallery();
+    }
+
+    function nextGallery() {
+      galleryIndex = (galleryIndex + 1) % galleryImages.length;
+      updateGallery();
+    }
+
+    prevBtn?.addEventListener('click', () => {
+      prevGallery();
+      resetGalleryAuto();
+    });
+    nextBtn?.addEventListener('click', () => {
+      nextGallery();
+      resetGalleryAuto();
+    });
+
+    // keyboard support when focused on the image
+    galleryImgEl?.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        prevGallery();
+        resetGalleryAuto();
+      }
+      if (e.key === 'ArrowRight') {
+        nextGallery();
+        resetGalleryAuto();
+      }
+    });
+    if (galleryImgEl) galleryImgEl.tabIndex = 0;
+
+    renderDots();
+    updateGallery();
+    startGalleryAuto();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopGalleryAuto();
+      else startGalleryAuto();
+    });
+
+    // ---- Works video player (custom controls) ----
+    const worksVideo = document.getElementById('worksVideo');
+    const vPlay = document.getElementById('vPlay');
+    const vSeek = document.getElementById('vSeek');
+    const vVol = document.getElementById('vVol');
+    const vMute = document.getElementById('vMute');
+    const vTime = document.getElementById('vTime');
+    const vDur = document.getElementById('vDur');
+    const vFs = document.getElementById('vFs');
+    const videoList = document.getElementById('videoList');
+
+    const playIcon = document.querySelector('#vPlay .icon-play');
+    const pauseIcon = document.querySelector('#vPlay .icon-pause');
+    const volIcon = document.querySelector('#vMute .icon-vol');
+    const mutedIcon = document.querySelector('#vMute .icon-muted');
+
+    function fmtTime(s) {
+      if (!isFinite(s) || s < 0) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function setPlayIcon(isPlaying) {
+      // while playing -> show pause, otherwise show play
+      if (playIcon) playIcon.classList.toggle('is-visible', !isPlaying);
+      if (pauseIcon) pauseIcon.classList.toggle('is-visible', !!isPlaying);
+      if (vPlay) vPlay.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+    }
+
+    // --- Volume: mute/unmute + white filled slider ---
+    let lastNonZeroVolume = 0.8;
+
+    function setMuteIcons() {
+      const muted = !!(worksVideo && (worksVideo.muted || worksVideo.volume <= 0.0001));
+      if (volIcon) volIcon.classList.toggle('is-visible', !muted);
+      if (mutedIcon) mutedIcon.classList.toggle('is-visible', muted);
+      if (vMute) vMute.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+    }
+
+    function setVolFill() {
+      if (!vVol) return;
+      const min = parseFloat(vVol.min || '0');
+      const max = parseFloat(vVol.max || '1');
+      const val = parseFloat(vVol.value || '0');
+      const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+
+      // Use theme text color so the fill is visible in BOTH dark and light modes.
+      const fill = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#E7F2FF';
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const track = isLight ? 'rgba(14, 14, 14, 0.22)' : 'rgba(231, 242, 255, 0.18)';
+
+      vVol.style.background = `linear-gradient(to right, ${fill} 0%, ${fill} ${pct}%, ${track} ${pct}%, ${track} 100%)`;
+    }
+
+    function setSeekFill() {
+      if (!vSeek) return;
+      const min = parseFloat(vSeek.min || '0');
+      const max = parseFloat(vSeek.max || '100');
+      const val = parseFloat(vSeek.value || '0');
+      const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+
+      const fill = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#E7F2FF';
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const track = isLight ? 'rgba(14, 14, 14, 0.22)' : 'rgba(231, 242, 255, 0.18)';
+
+      vSeek.style.background = `linear-gradient(to right, ${fill} 0%, ${fill} ${pct}%, ${track} ${pct}%, ${track} 100%)`;
+    }
+
+    function applyVolumeFromSlider() {
+      if (!worksVideo || !vVol) return;
+      const vol = Math.max(0, Math.min(1, parseFloat(vVol.value || '0')));
+      worksVideo.volume = vol;
+      worksVideo.muted = vol <= 0.0001;
+      if (vol > 0.0001) lastNonZeroVolume = vol;
+      setMuteIcons();
+      setVolFill();
+    }
+
+    function syncTimeUI() {
+      if (!worksVideo) return;
+      if (vTime) vTime.textContent = fmtTime(worksVideo.currentTime);
+      if (vDur) vDur.textContent = fmtTime(worksVideo.duration);
+      if (vSeek && isFinite(worksVideo.duration) && worksVideo.duration > 0) {
+        vSeek.value = String((worksVideo.currentTime / worksVideo.duration) * 100);
+        setSeekFill();
+      }
+    }
+
+    function loadVideo(src) {
+      if (!worksVideo) return;
+      worksVideo.pause();
+      setPlayIcon(false);
+
+      // Prefer updating the <source> child if it exists
+      const sourceEl = worksVideo.querySelector('source');
+      if (sourceEl) {
+        sourceEl.src = src;
+        worksVideo.removeAttribute('src');
+      } else {
+        worksVideo.src = src;
+      }
+
+      worksVideo.load();
+
+      // UI resets
+      if (vSeek) {
+        vSeek.value = '0';
+        setSeekFill();
+      }
+      if (vTime) vTime.textContent = '0:00';
+
+      // activate pill
+      if (videoList) {
+        Array.from(videoList.querySelectorAll('.video-pill')).forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-src') === src);
+        });
+      }
+    }
+
+    if (worksVideo) {
+      worksVideo.controls = false;
+      worksVideo.addEventListener('loadedmetadata', syncTimeUI);
+      worksVideo.addEventListener('timeupdate', syncTimeUI);
+      worksVideo.addEventListener('ended', () => setPlayIcon(false));
+      worksVideo.addEventListener('play', () => setPlayIcon(true));
+      worksVideo.addEventListener('pause', () => setPlayIcon(false));
+
+      // click video to toggle play
+      worksVideo.addEventListener('click', () => {
+        if (worksVideo.paused) worksVideo.play();
+        else worksVideo.pause();
+      });
+
+      // initial volume
+      if (vVol) {
+        worksVideo.volume = parseFloat(vVol.value || '0.8');
+        lastNonZeroVolume = worksVideo.volume || 0.8;
+        worksVideo.muted = worksVideo.volume <= 0.0001;
+        setVolFill();
+        setMuteIcons();
+      }
+
+      // initial seek fill
+      if (vSeek) setSeekFill();
+    }
+
+    vPlay?.addEventListener('click', () => {
+      if (!worksVideo) return;
+      if (worksVideo.paused) worksVideo.play();
+      else worksVideo.pause();
+    });
+
+    vSeek?.addEventListener('input', () => {
+      if (!worksVideo) return;
+      if (!isFinite(worksVideo.duration) || worksVideo.duration <= 0) return;
+      const pct = parseFloat(vSeek.value || '0');
+      worksVideo.currentTime = (pct / 100) * worksVideo.duration;
+      setSeekFill();
+      syncTimeUI();
+    });
+
+    vVol?.addEventListener('input', () => {
+      applyVolumeFromSlider();
+    });
+
+    vMute?.addEventListener('click', () => {
+      if (!worksVideo || !vVol) return;
+      const muted = worksVideo.muted || worksVideo.volume <= 0.0001;
+
+      if (muted) {
+        // unmute: restore last volume
+        const restore = Math.max(0.05, Math.min(1, lastNonZeroVolume || 0.8));
+        worksVideo.muted = false;
+        worksVideo.volume = restore;
+        vVol.value = String(restore);
+      } else {
+        // mute: instantly to 0
+        if (worksVideo.volume > 0.0001) lastNonZeroVolume = worksVideo.volume;
+        worksVideo.muted = true;
+        worksVideo.volume = 0;
+        vVol.value = '0';
+      }
+
+      setMuteIcons();
+      setVolFill();
+    });
+
+    vFs?.addEventListener('click', async () => {
+      const shell = document.querySelector('.video-shell');
+      if (!shell) return;
+      try {
+        if (!document.fullscreenElement) {
+          await shell.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (_) {}
+    });
+
+    // video list switching (manual)
+    videoList?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.video-pill');
+      if (!btn) return;
+      const src = btn.getAttribute('data-src');
+      if (src) loadVideo(src);
+    });
+
+    const themeButtons = Array.from(document.querySelectorAll('.theme-toggle'));
+themeButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    applyTheme(next);
+    setCookie('theme', next, 365);
+    setVolFill();
+    setSeekFill();
+  });
 });
 
-</script>
+    try {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+    } catch (_) {}
+    window.addEventListener('load', () => {
+      if (location.hash) {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+      window.scrollTo(0, 0);
+    });
 
+    const GUILD_ID = "1423293075454955624";
+    const URL = `https://discord.com/api/guilds/${GUILD_ID}/widget.json`;
+
+    async function refresh() {
+      try {
+        const res = await fetch(URL);
+        const data = await res.json();
+        document.getElementById("online").textContent = data.presence_count ?? "n/a";
+      } catch (e) {
+        document.getElementById("online").textContent = "n/a";
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
 </body>
 </html>
